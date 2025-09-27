@@ -12,7 +12,7 @@ export default function App() {
   const [user, setUser] = useState({
     name: 'Alex Rivera',
     email: 'alex.rivera@example.com',
-    avatarUrl: 'https://i.pravatar.cc/150?u=alexrivera',
+    avatarUrl: '[https://i.pravatar.cc/150?u=alexrivera](https://i.pravatar.cc/150?u=alexrivera)',
   });
 
   // Mock meeting data
@@ -112,13 +112,16 @@ export default function App() {
     }
   };
 
+  const isAuthPage = page === 'login' || page === 'signup';
+
   return (
-    <div className="bg-[#0A0A0A] text-gray-300 font-sans min-h-screen antialiased selection:bg-indigo-500/30">
-        <div className="absolute inset-0 z-0">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]"></div>
-        </div>
+    <div className={`font-sans min-h-screen antialiased selection:bg-indigo-500/30 ${isAuthPage ? 'bg-black text-gray-400' : 'bg-[#0A0A0A] text-gray-300'}`}>
+        {!isAuthPage && (
+          <div className="absolute inset-0 z-0">
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]"></div>
+          </div>
+        )}
         <div className="relative z-10">
-            {/* Added a toggle for demonstrating the empty state */}
             {page.includes('dashboard') && (
               <div className="fixed bottom-4 right-4 z-50 bg-gray-900 p-2 rounded-md border border-gray-700 text-xs">
                 <label className="flex items-center space-x-2 cursor-pointer">
@@ -138,45 +141,44 @@ export default function App() {
 const LoginPage = ({ onLogin, isLoading, setPage }) => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
-      <div className="w-full max-w-sm p-8 space-y-8 bg-black/30 backdrop-blur-lg border border-gray-800/50 rounded-2xl shadow-2xl shadow-indigo-500/10">
-        <div className="text-center">
-            <div className="flex justify-center items-center mb-4">
-                <h1 className="text-5xl font-bold tracking-tighter text-white">REC</h1>
-                <div className="mx-2 h-10 w-10 flex items-center justify-center">
-                    <Mic className="h-8 w-8 text-indigo-500" />
-                </div>
-                <h1 className="text-5xl font-bold tracking-tighter text-white">CORE</h1>
-            </div>
-          <p className="text-gray-500">The essential AI assistant for your meetings.</p>
+      <div className="w-full max-w-sm text-center">
+        <div className="flex justify-center items-center mb-4 space-x-2">
+            <h1 className="text-3xl font-medium tracking-widest text-gray-300">REC</h1>
+            <Mic className="h-6 w-6 text-gray-500" />
+            <h1 className="text-3xl font-medium tracking-widest text-gray-300">CORE</h1>
         </div>
+        <p className="text-gray-600 text-sm mb-12">The essential AI assistant for your meetings.</p>
         
-        <div className="space-y-6">
-            <div className="relative">
-                <input id="email" type="email" placeholder="alex@company.com" className="peer mt-1 block w-full px-4 py-3 bg-transparent border-b-2 border-gray-700 focus:border-indigo-500 outline-none transition-colors duration-300"/>
-                <div className="absolute inset-x-0 bottom-0 h-0.5 scale-x-0 peer-focus:scale-x-100 transition-transform duration-300 origin-center bg-indigo-500"></div>
-            </div>
-             <div className="relative">
-                <input id="password" type="password" placeholder="••••••••" className="peer mt-1 block w-full px-4 py-3 bg-transparent border-b-2 border-gray-700 focus:border-indigo-500 outline-none transition-colors duration-300"/>
-                <div className="absolute inset-x-0 bottom-0 h-0.5 scale-x-0 peer-focus:scale-x-100 transition-transform duration-300 origin-center bg-indigo-500"></div>
-            </div>
+        <div className="space-y-4 text-left">
+            <input 
+                id="email" 
+                type="email" 
+                placeholder="alex@company.com" 
+                className="block w-full px-1 py-3 bg-transparent border-b border-gray-800 focus:border-gray-400 outline-none transition-colors duration-300 text-sm"
+            />
+            <input 
+                id="password" 
+                type="password" 
+                placeholder="••••••••" 
+                className="block w-full px-1 py-3 bg-transparent border-b border-gray-800 focus:border-gray-400 outline-none transition-colors duration-300 text-sm"
+            />
         </div>
 
-        <div className="space-y-4 pt-4">
+        <div className="mt-10">
              <button 
                 onClick={onLogin} 
                 disabled={isLoading}
-                className="group w-full relative flex justify-center py-3 px-4 rounded-md text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black focus:ring-indigo-500 transition-all duration-300 disabled:bg-indigo-500/50 disabled:cursor-not-allowed overflow-hidden"
+                className="w-full py-3 px-4 rounded-md text-sm font-semibold text-black bg-gray-200 hover:bg-white focus:outline-none transition-all duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed"
              >
-                <span className="absolute top-0 left-0 w-full h-full bg-white/10 blur-sm opacity-0 group-hover:opacity-100 group-hover:-translate-x-full transition-all duration-500"></span>
                 {isLoading ? (
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black mx-auto"></div>
                 ) : (
                     'Sign In'
                 )}
             </button>
         </div>
       </div>
-       <p className="mt-8 text-center text-sm text-gray-600">Don't have an account? <a href="#" onClick={(e) => { e.preventDefault(); setPage('signup'); }} className="font-medium text-indigo-400 hover:text-indigo-300">Sign Up</a></p>
+       <p className="mt-8 text-center text-sm text-gray-600">Don't have an account? <a href="#" onClick={(e) => { e.preventDefault(); setPage('signup'); }} className="font-medium text-blue-500 hover:text-blue-400">Sign Up</a></p>
     </div>
   );
 };
@@ -184,49 +186,50 @@ const LoginPage = ({ onLogin, isLoading, setPage }) => {
 const SignUpPage = ({ onSignUp, isLoading, setPage }) => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
-      <div className="w-full max-w-sm p-8 space-y-8 bg-black/30 backdrop-blur-lg border border-gray-800/50 rounded-2xl shadow-2xl shadow-indigo-500/10">
-        <div className="text-center">
-            <div className="flex justify-center items-center mb-4">
-                <h1 className="text-5xl font-bold tracking-tighter text-white">REC</h1>
-                <div className="mx-2 h-10 w-10 flex items-center justify-center">
-                    <Mic className="h-8 w-8 text-indigo-500" />
-                </div>
-                <h1 className="text-5xl font-bold tracking-tighter text-white">CORE</h1>
-            </div>
-          <p className="text-gray-500">Create your account to get started.</p>
+      <div className="w-full max-w-sm text-center">
+        <div className="flex justify-center items-center mb-4 space-x-2">
+            <h1 className="text-3xl font-medium tracking-widest text-gray-300">REC</h1>
+            <Mic className="h-6 w-6 text-gray-500" />
+            <h1 className="text-3xl font-medium tracking-widest text-gray-300">CORE</h1>
         </div>
+        <p className="text-gray-600 text-sm mb-12">Create your account to get started.</p>
         
-        <div className="space-y-6">
-            <div className="relative">
-                <input id="name" type="text" placeholder="Full Name" className="peer mt-1 block w-full px-4 py-3 bg-transparent border-b-2 border-gray-700 focus:border-indigo-500 outline-none transition-colors duration-300"/>
-                <div className="absolute inset-x-0 bottom-0 h-0.5 scale-x-0 peer-focus:scale-x-100 transition-transform duration-300 origin-center bg-indigo-500"></div>
-            </div>
-            <div className="relative">
-                <input id="email-signup" type="email" placeholder="Email Address" className="peer mt-1 block w-full px-4 py-3 bg-transparent border-b-2 border-gray-700 focus:border-indigo-500 outline-none transition-colors duration-300"/>
-                <div className="absolute inset-x-0 bottom-0 h-0.5 scale-x-0 peer-focus:scale-x-100 transition-transform duration-300 origin-center bg-indigo-500"></div>
-            </div>
-             <div className="relative">
-                <input id="password-signup" type="password" placeholder="Create Password" className="peer mt-1 block w-full px-4 py-3 bg-transparent border-b-2 border-gray-700 focus:border-indigo-500 outline-none transition-colors duration-300"/>
-                <div className="absolute inset-x-0 bottom-0 h-0.5 scale-x-0 peer-focus:scale-x-100 transition-transform duration-300 origin-center bg-indigo-500"></div>
-            </div>
+        <div className="space-y-4 text-left">
+            <input 
+                id="name" 
+                type="text" 
+                placeholder="Full Name" 
+                className="block w-full px-1 py-3 bg-transparent border-b border-gray-800 focus:border-gray-400 outline-none transition-colors duration-300 text-sm"
+            />
+            <input 
+                id="email-signup" 
+                type="email" 
+                placeholder="Email Address" 
+                className="block w-full px-1 py-3 bg-transparent border-b border-gray-800 focus:border-gray-400 outline-none transition-colors duration-300 text-sm"
+            />
+            <input 
+                id="password-signup" 
+                type="password" 
+                placeholder="Create Password" 
+                className="block w-full px-1 py-3 bg-transparent border-b border-gray-800 focus:border-gray-400 outline-none transition-colors duration-300 text-sm"
+            />
         </div>
 
-        <div className="space-y-4 pt-4">
+        <div className="mt-10">
              <button 
                 onClick={onSignUp} 
                 disabled={isLoading}
-                className="group w-full relative flex justify-center py-3 px-4 rounded-md text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black focus:ring-indigo-500 transition-all duration-300 disabled:bg-indigo-500/50 disabled:cursor-not-allowed overflow-hidden"
+                className="w-full py-3 px-4 rounded-md text-sm font-semibold text-black bg-gray-200 hover:bg-white focus:outline-none transition-all duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed"
              >
-                <span className="absolute top-0 left-0 w-full h-full bg-white/10 blur-sm opacity-0 group-hover:opacity-100 group-hover:-translate-x-full transition-all duration-500"></span>
                 {isLoading ? (
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black mx-auto"></div>
                 ) : (
                     'Create Account'
                 )}
             </button>
         </div>
       </div>
-       <p className="mt-8 text-center text-sm text-gray-600">Already have an account? <a href="#" onClick={(e) => { e.preventDefault(); setPage('login'); }} className="font-medium text-indigo-400 hover:text-indigo-300">Sign In</a></p>
+       <p className="mt-8 text-center text-sm text-gray-600">Already have an account? <a href="#" onClick={(e) => { e.preventDefault(); setPage('login'); }} className="font-medium text-blue-500 hover:text-blue-400">Sign In</a></p>
     </div>
   );
 };
@@ -559,4 +562,3 @@ const DashboardSkeleton = () => (
     </div>
   </div>
 );
-

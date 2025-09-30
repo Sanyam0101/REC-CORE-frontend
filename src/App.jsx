@@ -1,71 +1,62 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Mic, Video, Users, LogOut, Settings, Share2, Trash2, Download, CheckCircle, Clock, Link as LinkIcon, Zap, FileText, Target, User as UserIcon, Bell, CreditCard, Shield } from 'lucide-react';
 
-// Main App Component - Simulates routing and state management
+// Import Firebase client SDK
+import { initializeApp } from "firebase/app";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
+
+
+// --- Firebase Configuration ---
+// This should now be filled with your actual Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyCSmAgK3S2CVJd7c_4sie2FvvWNNXzog-s",
+  authDomain: "rec-core-app.firebaseapp.com",
+  projectId: "rec-core-app",
+  storageBucket: "rec-core-app.appspot.com",
+  messagingSenderId: "233529808299",
+  appId: "1:233529808299:web:7fd65de81c09e7f4ae2eee",
+  measurementId: "G-4RVYJG73YZ"
+};
+
+// Initialize Firebase
+const firebaseApp = initializeApp(firebaseConfig);
+const auth = getAuth(firebaseApp);
+// -----------------------------
+
+
+// Main App Component
 export default function App() {
-  const [page, setPage] = useState('login'); // 'login', 'signup', 'dashboard', 'meeting', 'settings'
+  const [page, setPage] = useState('loading'); // NEW: Start in a 'loading' state
+  const [currentUser, setCurrentUser] = useState(null); // NEW: State to hold the logged-in user object
+  const [meetings, setMeetings] = useState([]); // NEW: State to hold meetings fetched from the API
   const [selectedMeeting, setSelectedMeeting] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [showEmptyState, setShowEmptyState] = useState(false); // Toggle for demo purposes
+  const [showEmptyState, setShowEmptyState] = useState(false);
 
-  // Mock user data
-  const [user, setUser] = useState({
-    name: 'Alex Rivera',
-    email: 'alex.rivera@example.com',
-    // FIX: Corrected the broken image URL
-    avatarUrl: 'https://i.pravatar.cc/150?u=alexrivera',
-  });
+  // NEW: Real-time session management
+  useEffect(() => {
+    // onAuthStateChanged is a listener that runs whenever the user signs in or out.
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        // User is signed in.
+        setCurrentUser({
+          uid: user.uid,
+          name: user.displayName,
+          email: user.email,
+          avatarUrl: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`,
+        });
+        setPage('dashboard');
+      } else {
+        // User is signed out.
+        setCurrentUser(null);
+        setPage('login');
+      }
+    });
 
-  // Mock meeting data
-  const meetings = [
-    {
-      id: 1,
-      title: 'Q3 Project Phoenix Strategy Sync',
-      platform: 'Zoom',
-      date: '2025-09-26T10:00:00Z',
-      duration: '45 min',
-      attendees: 5,
-      summary: 'Aligned on the final feature set for the Q3 launch. Key decisions made on budget allocation and marketing push. Action items assigned to team leads.',
-      actionItems: [
-        { id: 1, text: 'Finalize budget report for Phoenix.', owner: 'Sarah', completed: true },
-        { id: 2, text: 'Draft initial marketing copy.', owner: 'Alex', completed: false },
-        { id: 3, text: 'Update the project timeline in Jira.', owner: 'Mike', completed: false },
-      ],
-      transcript: [
-        { speaker: 'Sarah', time: '00:02:15', text: 'Okay team, let\'s kick things off. The main agenda today is to finalize the budget for Project Phoenix.' },
-        { speaker: 'Alex', time: '00:03:01', text: 'Thanks, Sarah. I\'ve reviewed the preliminary numbers. I think we need to allocate more to the digital marketing campaign.' },
-        { speaker: 'Mike', time: '00:05:20', text: 'I agree with Alex. The initial allocation seems a bit low given our target demographic. What are your thoughts, Sarah?' },
-        { speaker: 'Sarah', time: '00:06:45', text: 'That\'s a fair point. Let\'s increase it by 15%. I\'ll take the action item to finalize the budget report with the new figures.' },
-         { speaker: 'Alex', time: '00:08:10', text: 'Great. I will draft the initial marketing copy based on that. Mike, can you handle the timeline update?' },
-         { speaker: 'Mike', time: '00:08:35', text: 'Yep, consider it done. I\'ll update the Jira board this afternoon.' },
-      ],
-      keyTopics: ['Budget Allocation', 'Project Phoenix', 'Marketing Campaign', 'Timeline', 'Jira Update', 'Q3 Launch'],
-    },
-    {
-      id: 2,
-      title: 'Weekly Standup - Engineering Team',
-      platform: 'Google Meet',
-      date: '2025-09-25T09:00:00Z',
-      duration: '25 min',
-      attendees: 8,
-      summary: 'Quick updates on current sprints. No major blockers identified. Discussed the upcoming server migration and assigned preliminary research tasks.',
-      actionItems: [{ id: 1, text: 'Research new server migration tools.', owner: 'Dev Team', completed: false }],
-      transcript: [{ speaker: 'Lead', time: '00:01:00', text: 'Alright, quick updates everyone...' }],
-      keyTopics: ['Sprint Update', 'Server Migration', 'Blockers', 'Performance Metrics'],
-    },
-     {
-      id: 3,
-      title: 'Client Onboarding Call - Acme Corp',
-      platform: 'Zoom',
-      date: '2025-09-24T14:00:00Z',
-      duration: '1 hr 15 min',
-      attendees: 3,
-      summary: 'Successful onboarding for Acme Corp. Walked through the platform\'s main features and answered their initial questions. Follow-up meeting scheduled.',
-      actionItems: [{ id: 1, text: 'Send follow-up email with resources to Acme.', owner: 'Alex', completed: true }],
-      transcript: [{ speaker: 'Alex', time: '00:02:30', text: 'Welcome to the platform, we\'re excited to have you onboard...' }],
-      keyTopics: ['Onboarding', 'Acme Corp', 'Platform Demo', 'User Questions', 'Follow-up'],
-    }
-  ];
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, []);
+
 
   const handleSelectMeeting = (meeting) => {
     setLoading(true);
@@ -76,68 +67,69 @@ export default function App() {
     }, 1000);
   };
 
-  const handleLogin = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setPage('dashboard');
-      setLoading(false);
-    }, 1200);
-  }
-
-  const handleSignUp = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setPage('dashboard');
-      setLoading(false);
-    }, 1200);
-  }
+  const handleSignOut = async () => {
+    await signOut(auth);
+    setPage('login');
+  };
 
   // A simple router
   const renderPage = () => {
+    if (page === 'loading') {
+      return <div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-500"></div></div>;
+    }
     if (loading && (page.includes('dashboard') || page.includes('meeting'))) {
       return <DashboardSkeleton />;
     }
     switch (page) {
       case 'login':
-        return <LoginPage onLogin={handleLogin} isLoading={loading} setPage={setPage} />;
+        return <LoginPage setLoading={setLoading} setPage={setPage} isLoading={loading} />;
       case 'signup':
-        return <SignUpPage onSignUp={handleSignUp} isLoading={loading} setPage={setPage} />;
+        return <SignUpPage setLoading={setLoading} setPage={setPage} isLoading={loading} />;
       case 'dashboard':
-        return <Dashboard user={user} meetings={showEmptyState ? [] : meetings} onSelectMeeting={handleSelectMeeting} setPage={setPage} />;
+        return <Dashboard user={currentUser} meetings={meetings} setMeetings={setMeetings} onSelectMeeting={handleSelectMeeting} setPage={setPage} onSignOut={handleSignOut} />;
       case 'meeting':
         return <MeetingDetails meeting={selectedMeeting} onBack={() => setPage('dashboard')} />;
       case 'settings':
-        return <AccountSettingsPage user={user} setUser={setUser} setPage={setPage} />;
+        return <AccountSettingsPage user={currentUser} setUser={setCurrentUser} setPage={setPage} onSignOut={handleSignOut} />;
       default:
-        return <LoginPage onLogin={handleLogin} isLoading={loading} setPage={setPage} />;
+        return <LoginPage setLoading={setLoading} setPage={setPage} isLoading={loading} />;
     }
   };
 
   return (
-    // FIX: Applied consistent background styling across all pages
     <div className="bg-[#0A0A0A] text-gray-300 font-sans min-h-screen antialiased selection:bg-indigo-500/30">
         <div className="absolute inset-0 z-0">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]"></div>
         </div>
         <div className="relative z-10">
-            {page.includes('dashboard') && (
-              <div className="fixed bottom-4 right-4 z-50 bg-gray-900 p-2 rounded-md border border-gray-700 text-xs">
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input type="checkbox" checked={showEmptyState} onChange={() => setShowEmptyState(!showEmptyState)} className="form-checkbox h-4 w-4 text-indigo-600 bg-gray-800 border-gray-600 rounded focus:ring-indigo-500"/>
-                  <span>Show Empty State</span>
-                </label>
-              </div>
-            )}
             {renderPage()}
         </div>
     </div>
   );
 }
 
+
 // -- PAGES & COMPONENTS -- //
 
-// FIX: Reverted to the more aesthetic glassmorphism design for Login
-const LoginPage = ({ onLogin, isLoading, setPage }) => {
+// NEW: Updated LoginPage with real login logic
+const LoginPage = ({ setLoading, setPage, isLoading }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleLogin = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      // The onAuthStateChanged listener in App.js will handle the redirect to dashboard
+    } catch (err) {
+      setError('Failed to sign in. Please check your credentials.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
       <div className="w-full max-w-sm p-8 space-y-8 bg-black/30 backdrop-blur-lg border border-gray-800/50 rounded-2xl shadow-2xl shadow-indigo-500/10">
@@ -154,18 +146,20 @@ const LoginPage = ({ onLogin, isLoading, setPage }) => {
         
         <div className="space-y-6">
             <div className="relative">
-                <input id="email" type="email" placeholder="alex@company.com" className="peer mt-1 block w-full px-4 py-3 bg-transparent border-b-2 border-gray-700 focus:border-indigo-500 outline-none transition-colors duration-300"/>
+                <input id="email" type="email" placeholder="alex@company.com" value={email} onChange={(e) => setEmail(e.target.value)} className="peer mt-1 block w-full px-4 py-3 bg-transparent border-b-2 border-gray-700 focus:border-indigo-500 outline-none transition-colors duration-300"/>
                 <div className="absolute inset-x-0 bottom-0 h-0.5 scale-x-0 peer-focus:scale-x-100 transition-transform duration-300 origin-center bg-indigo-500"></div>
             </div>
              <div className="relative">
-                <input id="password" type="password" placeholder="••••••••" className="peer mt-1 block w-full px-4 py-3 bg-transparent border-b-2 border-gray-700 focus:border-indigo-500 outline-none transition-colors duration-300"/>
+                <input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="peer mt-1 block w-full px-4 py-3 bg-transparent border-b-2 border-gray-700 focus:border-indigo-500 outline-none transition-colors duration-300"/>
                 <div className="absolute inset-x-0 bottom-0 h-0.5 scale-x-0 peer-focus:scale-x-100 transition-transform duration-300 origin-center bg-indigo-500"></div>
             </div>
         </div>
+        
+        {error && <p className="text-sm text-red-400 text-center pt-2">{error}</p>}
 
         <div className="space-y-4 pt-4">
              <button 
-                onClick={onLogin} 
+                onClick={handleLogin} 
                 disabled={isLoading}
                 className="group w-full relative flex justify-center py-3 px-4 rounded-md text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black focus:ring-indigo-500 transition-all duration-300 disabled:bg-indigo-500/50 disabled:cursor-not-allowed overflow-hidden"
              >
@@ -183,8 +177,40 @@ const LoginPage = ({ onLogin, isLoading, setPage }) => {
   );
 };
 
-// FIX: Reverted to the more aesthetic glassmorphism design for SignUp
-const SignUpPage = ({ onSignUp, isLoading, setPage }) => {
+
+// SignUpPage remains mostly the same, it's already functional
+const SignUpPage = ({ isLoading, setLoading, setPage }) => {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSignUp = async () => {
+    setError('');
+    setLoading(true);
+
+    try {
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Something went wrong');
+      }
+
+      await signInWithEmailAndPassword(auth, email, password);
+      // onAuthStateChanged will handle the redirect
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
       <div className="w-full max-w-sm p-8 space-y-8 bg-black/30 backdrop-blur-lg border border-gray-800/50 rounded-2xl shadow-2xl shadow-indigo-500/10">
@@ -201,22 +227,24 @@ const SignUpPage = ({ onSignUp, isLoading, setPage }) => {
         
         <div className="space-y-6">
             <div className="relative">
-                <input id="name" type="text" placeholder="Full Name" className="peer mt-1 block w-full px-4 py-3 bg-transparent border-b-2 border-gray-700 focus:border-indigo-500 outline-none transition-colors duration-300"/>
+                <input id="name" type="text" placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} className="peer mt-1 block w-full px-4 py-3 bg-transparent border-b-2 border-gray-700 focus:border-indigo-500 outline-none transition-colors duration-300"/>
                 <div className="absolute inset-x-0 bottom-0 h-0.5 scale-x-0 peer-focus:scale-x-100 transition-transform duration-300 origin-center bg-indigo-500"></div>
             </div>
             <div className="relative">
-                <input id="email-signup" type="email" placeholder="Email Address" className="peer mt-1 block w-full px-4 py-3 bg-transparent border-b-2 border-gray-700 focus:border-indigo-500 outline-none transition-colors duration-300"/>
+                <input id="email-signup" type="email" placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} className="peer mt-1 block w-full px-4 py-3 bg-transparent border-b-2 border-gray-700 focus:border-indigo-500 outline-none transition-colors duration-300"/>
                 <div className="absolute inset-x-0 bottom-0 h-0.5 scale-x-0 peer-focus:scale-x-100 transition-transform duration-300 origin-center bg-indigo-500"></div>
             </div>
              <div className="relative">
-                <input id="password-signup" type="password" placeholder="Create Password" className="peer mt-1 block w-full px-4 py-3 bg-transparent border-b-2 border-gray-700 focus:border-indigo-500 outline-none transition-colors duration-300"/>
+                <input id="password-signup" type="password" placeholder="Create Password" value={password} onChange={(e) => setPassword(e.target.value)} className="peer mt-1 block w-full px-4 py-3 bg-transparent border-b-2 border-gray-700 focus:border-indigo-500 outline-none transition-colors duration-300"/>
                 <div className="absolute inset-x-0 bottom-0 h-0.5 scale-x-0 peer-focus:scale-x-100 transition-transform duration-300 origin-center bg-indigo-500"></div>
             </div>
         </div>
+        
+        {error && <p className="text-sm text-red-400 text-center">{error}</p>}
 
         <div className="space-y-4 pt-4">
              <button 
-                onClick={onSignUp} 
+                onClick={handleSignUp} 
                 disabled={isLoading}
                 className="group w-full relative flex justify-center py-3 px-4 rounded-md text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black focus:ring-indigo-500 transition-all duration-300 disabled:bg-indigo-500/50 disabled:cursor-not-allowed overflow-hidden"
              >
@@ -234,7 +262,8 @@ const SignUpPage = ({ onSignUp, isLoading, setPage }) => {
   );
 };
 
-const Header = ({ user, setPage }) => {
+// NEW: Updated Header to handle sign out
+const Header = ({ user, setPage, onSignOut }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -245,9 +274,7 @@ const Header = ({ user, setPage }) => {
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [dropdownRef]);
 
   const handleLinkClick = (page) => {
@@ -272,32 +299,68 @@ const Header = ({ user, setPage }) => {
     </div>
     <div className="flex items-center space-x-4">
       <div className="relative" ref={dropdownRef}>
-        <img 
-          src={user.avatarUrl} 
-          alt={user.name} 
-          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className="h-9 w-9 rounded-full cursor-pointer border-2 border-gray-800 hover:border-indigo-500 transition-colors" 
-        />
-        <div 
-          className={`absolute right-0 mt-2 w-48 bg-gray-950 rounded-md shadow-lg py-1 z-20 border border-gray-800 transition-all duration-200 origin-top-right ${isDropdownOpen ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-95 pointer-events-none'}`}
-        >
-          <div className="px-4 py-2 text-sm text-gray-400 border-b border-gray-800">
-            <p className="font-semibold text-white">{user.name}</p>
-          </div>
-          <a href="#" onClick={(e) => { e.preventDefault(); handleLinkClick('settings'); }} className="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-800/50"><Settings className="mr-2 h-4 w-4" /> Account Settings</a>
-          <a href="#" onClick={(e) => { e.preventDefault(); handleLinkClick('login'); }} className="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-800/50"><LogOut className="mr-2 h-4 w-4" /> Log Out</a>
-        </div>
+        {user && (
+          <>
+            <img 
+              src={user.avatarUrl} 
+              alt={user.name} 
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="h-9 w-9 rounded-full cursor-pointer border-2 border-gray-800 hover:border-indigo-500 transition-colors" 
+            />
+            <div 
+              className={`absolute right-0 mt-2 w-48 bg-gray-950 rounded-md shadow-lg py-1 z-20 border border-gray-800 transition-all duration-200 origin-top-right ${isDropdownOpen ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-95 pointer-events-none'}`}
+            >
+              <div className="px-4 py-2 text-sm text-gray-400 border-b border-gray-800">
+                <p className="font-semibold text-white">{user.name}</p>
+              </div>
+              <a href="#" onClick={(e) => { e.preventDefault(); handleLinkClick('settings'); }} className="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-800/50"><Settings className="mr-2 h-4 w-4" /> Account Settings</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); onSignOut(); }} className="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-800/50"><LogOut className="mr-2 h-4 w-4" /> Log Out</a>
+            </div>
+          </>
+        )}
       </div>
     </div>
   </header>
   )
 };
 
-const Dashboard = ({ user, meetings, onSelectMeeting, setPage }) => (
+// NEW: Updated Dashboard to fetch real data
+const Dashboard = ({ user, meetings, setMeetings, onSelectMeeting, setPage, onSignOut }) => {
+  useEffect(() => {
+    const fetchMeetings = async () => {
+      if (auth.currentUser) {
+        try {
+          const token = await auth.currentUser.getIdToken();
+          const response = await fetch('/api/meetings', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setMeetings(data);
+          } else {
+            console.error('Failed to fetch meetings');
+            // Handle error, maybe sign out user if token is invalid
+            if (response.status === 401) {
+              onSignOut();
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching meetings:', error);
+        }
+      }
+    };
+    fetchMeetings();
+  }, [user, setMeetings, onSignOut]);
+
+  return (
   <>
-    <Header user={user} setPage={setPage} />
+    <Header user={user} setPage={setPage} onSignOut={onSignOut} />
     <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
-      {meetings.length > 0 ? (
+      {meetings.length === 0 ? (
+        <DashboardEmptyState />
+      ) : (
         <>
           <div className="mb-10">
             <h1 className="text-4xl font-bold text-white tracking-tight">Hi, {user.name.split(' ')[0]}</h1>
@@ -342,12 +405,10 @@ const Dashboard = ({ user, meetings, onSelectMeeting, setPage }) => (
             </div>
           </div>
         </>
-      ) : (
-        <DashboardEmptyState />
       )}
     </main>
   </>
-);
+)};
 
 const DashboardEmptyState = () => (
     <div className="text-center py-20 px-4">
@@ -380,7 +441,7 @@ const MeetingDetails = ({ meeting, onBack }) => (
     </div>
     
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 p-4 sm:p-6 lg:p-8">
-      <div className="lg-col-span-1 space-y-8 lg:sticky lg:top-24 self-start">
+      <div className="lg:col-span-1 space-y-8 lg:sticky lg:top-24 self-start">
         <InsightCard icon={<Zap />} title="AI Summary" content={meeting.summary} />
         <InsightCard icon={<Target />} title="Action Items">
           <ul className="space-y-4">
@@ -422,7 +483,7 @@ const MeetingDetails = ({ meeting, onBack }) => (
   </div>
 );
 
-const AccountSettingsPage = ({ user, setUser, setPage }) => {
+const AccountSettingsPage = ({ user, setUser, setPage, onSignOut }) => {
     const [activeTab, setActiveTab] = useState('profile');
     
     const renderContent = () => {
@@ -507,7 +568,7 @@ const AccountSettingsPage = ({ user, setUser, setPage }) => {
     
     return (
         <>
-        <Header user={user} setPage={setPage} />
+        <Header user={user} setPage={setPage} onSignOut={onSignOut} />
         <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
             <h1 className="text-4xl font-bold text-white tracking-tight mb-8">Account Settings</h1>
             <div className="flex flex-col lg:flex-row gap-12">

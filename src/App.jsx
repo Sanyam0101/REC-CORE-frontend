@@ -8,14 +8,15 @@ import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from
 
 // --- Firebase Configuration ---
 // This should now be filled with your actual Firebase config
+// --- SECURE Firebase Configuration ---
+// The configuration is now securely loaded from environment variables.
 const firebaseConfig = {
-  apiKey: "AIzaSyCSmAgK3S2CVJd7c_4sie2FvvWNNXzog-s",
-  authDomain: "rec-core-app.firebaseapp.com",
-  projectId: "rec-core-app",
-  storageBucket: "rec-core-app.appspot.com",
-  messagingSenderId: "233529808299",
-  appId: "1:233529808299:web:7fd65de81c09e7f4ae2eee",
-  measurementId: "G-4RVYJG73YZ"
+  apiKey: import.meta.env.VITE_API_KEY,
+  authDomain: import.meta.env.VITE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_APP_ID
 };
 
 // Initialize Firebase
